@@ -1,5 +1,6 @@
 from app.database import SessionLocal
 
+
 # Функция для получения сессии БД
 def get_db():
     # Создаем новую сессию (подключение к БД)

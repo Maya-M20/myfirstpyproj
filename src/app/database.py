@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения
-load_dotenv()  #Функция ищет файл .env в папке проекта и загружает все переменные из него.
+load_dotenv()  # Функция ищет файл .env в папке проекта и загружает все переменные из него.
 
 # Для Redis
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -23,15 +23,11 @@ if not DATABASE_URL:
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_recycle=300  # Переподключаемся каждые 5 минут
+    pool_recycle=300,  # Переподключаемся каждые 5 минут
 )
 
 # Создаем фабрику сессий
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Базовый класс для всех моделей
 Base = declarative_base()
