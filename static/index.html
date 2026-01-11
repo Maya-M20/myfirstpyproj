@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecules API</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Molecules API</h1>
+        <p>Управление химическими молекулами</p>
+        
+        <div class="endpoints">
+            <h2>Доступные эндпоинты:</h2>
+            <ul>
+                <li><code>GET /molecules</code> - Список молекул</li>
+                <li><code>POST /molecules</code> - Добавить молекулу</li>
+                <li><code>POST /search</code> - Поиск по субструктуре</li>
+                <li><code>GET /cache/stats</code> - Статистика Redis</li>
+            </ul>
+        </div>
+        
+        <button onclick="testAPI()">Тест API</button>
+        <div id="response"></div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

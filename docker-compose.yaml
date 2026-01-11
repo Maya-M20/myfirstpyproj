@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  # ========================
+  # POSTGRESQL
+  # ========================
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: molecules_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================
+  # REDIS
+  # ========================
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --save 60 1
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ========================
+  # FASTAPI (порт 8080)
+  # ========================
+  api:
+    build: .
+    container_name: fastapi_app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src:ro          # src/ → /app/src
+      - ./app:/app/app:ro          # app/ → /app/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app/src:/app   # ОБА пути!
+      - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CACHE_TTL_MOLECULES=300
+      - CACHE_TTL_MOLECULE=600
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ========================
+  # CELERY WORKER
+  # ========================
+  celery_worker:
+    build: .
+    container_name: celery_worker
+    volumes:
+      - ./src:/app/src:ro          # src/ → /app/src
+      - ./app:/app/app:ro          # app/ → /app/app
+    environment:
+      - PYTHONPATH=/app:/app/app:/app/src  # ВСЕ пути!
+      - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_WORKER_CONCURRENCY=4
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+
+  # ========================
+  # CELERY BEAT
+  # ========================
+  celery_beat:
+    build: .
+    container_name: celery_beat
+    volumes:
+      - ./src:/app/src:ro
+      - ./app:/app/app:ro
+    environment:
+      - PYTHONPATH=/app:/app/app:/app/src
+      - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery_worker:
+        condition: service_started
+    restart: unless-stopped
+    command: celery -A app.celery_app beat --loglevel=info
+
+  # ========================
+  # FLOWER
+  # ========================
+  flower:
+    build: .
+    container_name: flower_monitor
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./src:/app/src:ro
+      - ./app:/app/app:ro
+    environment:
+      - PYTHONPATH=/app:/app/app:/app/src
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+      - FLOWER_BASIC_AUTH=admin:admin123
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery_worker:
+        condition: service_started
+    restart: unless-stopped
+    command: celery -A app.celery_app flower --port=5555 --basic_auth=admin:admin123
+
+  # ========================
+  # NGINX
+  # ========================
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./static:/usr/share/nginx/html/static:ro
+    depends_on:
+      - api
+    restart: always
+    
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
