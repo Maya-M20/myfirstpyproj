@@ -400,7 +400,7 @@ def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
             formula="N/A",
             molecular_weight=0.0,
             smiles=molecule.smiles,
-            inchi=None,
+            inchi=""  # ← Используем переданное значение или None
         )
 
         db.add(db_molecule)
@@ -411,7 +411,7 @@ def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
             f"✅ Молекула добавлена: ID='{molecule.id}', SMILES='{molecule.smiles}'"
         )
 
-        #  ИНВАЛИДАЦИЯ КЕША ПОСЛЕ ДОБАВЛЕНИЯ
+        # Инвалидация кеша
         invalidate_molecules_cache()
         logger.info(f"Кеш инвалидирован после добавления молекулы {molecule.id}")
 

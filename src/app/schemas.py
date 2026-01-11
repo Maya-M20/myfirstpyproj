@@ -9,6 +9,7 @@ class MoleculeBase(BaseModel):
     name: str
     formula: str
     molecular_weight: float
+    inchi: str
     smiles: str
 
 
