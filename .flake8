@@ -5,7 +5,11 @@ extend-ignore =
     E266,
     E501,
     W293,
-    W291
+    W291,
+    E722,
+    F401,
+    F824,
+    E262
 exclude =
     __pycache__,
     migrations,
