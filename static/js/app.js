@@ -1,45 +1,140 @@
-async function testAPI() {
-    const responseDiv = document.getElementById('response');
-    responseDiv.innerHTML = '⌛ Тестируем API...';
-    
-    try {
-        // 1. Тест главной страницы
-        const homeResponse = await fetch('/');
-        const homeText = await homeResponse.text();
-        
-        // 2. Тест API с обработкой HTML/JSON
-        const apiResponse = await fetch('/molecules');
-        const contentType = apiResponse.headers.get('content-type');
-        
-        let apiData;
-        if (contentType && contentType.includes('application/json')) {
-            apiData = await apiResponse.json();
-        } else {
-            const text = await apiResponse.text();
-            throw new Error(`Получен HTML вместо JSON: ${text.substring(0, 100)}...`);
-        }
-        
-        // 3. Тест Redis
-        const redisResponse = await fetch('/cache/stats');
-        const redisData = await redisResponse.json();
-        
-        responseDiv.innerHTML = `
-            <h3>✅ API работает!</h3>
-            <p><strong>Главная страница:</strong> ${homeResponse.status}</p>
-            <p><strong>Молекул в БД:</strong> ${apiData.total || 0}</p>
-            <p><strong>Redis:</strong> ${redisData.redis || 'не доступен'}</p>
-            <pre>${JSON.stringify(redisData, null, 2)}</pre>
-        `;
-    } catch (error) {
-        responseDiv.innerHTML = `
-            <h3>❌ Ошибка API</h3>
-            <p><strong>Сообщение:</strong> ${error.message}</p>
-            <p><strong>Проверьте:</strong></p>
-            <ol>
-                <li>Контейнер API запущен: <code>docker ps | grep api</code></li>
-                <li>Nginx конфиг правильный</li>
-                <li>API доступно на порту 8080</li>
-            </ol>
-        `;
-    }
+const API_BASE = "";
+
+let currentPage = 0;
+const limit = 5;
+
+/* ===============================
+   Утилиты
+================================ */
+function showStatus(el, msg, type = "success") {
+    el.textContent = msg;
+    el.className = `status ${type}`;
 }
+
+/* ===============================
+   Добавление молекулы
+================================ */
+document.getElementById("add-molecule-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("mol-id").value;
+    const smiles = document.getElementById("mol-smiles").value;
+    const statusEl = document.getElementById("add-status");
+
+    try {
+        const res = await fetch(`${API_BASE}/molecules`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, smiles })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        showStatus(statusEl, "Молекула добавлена");
+        loadMolecules();
+    } catch (err) {
+        showStatus(statusEl, err.message, "error");
+    }
+});
+
+/* ===============================
+   Загрузка списка молекул
+================================ */
+async function loadMolecules() {
+    const list = document.getElementById("molecules-list");
+    const pageInfo = document.getElementById("page-info");
+
+    list.innerHTML = "Загрузка...";
+
+    const skip = currentPage * limit;
+    const res = await fetch(`/molecules?skip=${skip}&limit=${limit}`);
+    const data = await res.json();
+
+    list.innerHTML = "";
+    data.molecules.forEach(m => {
+        const div = document.createElement("div");
+        div.textContent = `${m.id} | ${m.smiles}`;
+        list.appendChild(div);
+    });
+
+    pageInfo.textContent = `Страница ${currentPage + 1}`;
+}
+
+document.getElementById("prev-page").onclick = () => {
+    if (currentPage > 0) {
+        currentPage--;
+        loadMolecules();
+    }
+};
+
+document.getElementById("next-page").onclick = () => {
+    currentPage++;
+    loadMolecules();
+};
+
+/* ===============================
+   Субструктурный поиск (async)
+================================ */
+document.getElementById("search-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const substructure = document.getElementById("substructure").value;
+    const statusEl = document.getElementById("search-status");
+    const resultsEl = document.getElementById("search-results");
+
+    resultsEl.innerHTML = "";
+
+    try {
+        const res = await fetch("/async/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ substructure })
+        });
+
+        const data = await res.json();
+        showStatus(statusEl, "Задача запущена");
+
+        pollTaskStatus(data.task_id);
+    } catch (err) {
+        showStatus(statusEl, err.message, "error");
+    }
+});
+
+/* ===============================
+   Polling Celery статуса
+================================ */
+async function pollTaskStatus(taskId) {
+    const statusEl = document.getElementById("search-status");
+    const resultsEl = document.getElementById("search-results");
+
+    const interval = setInterval(async () => {
+        const res = await fetch(`/tasks/status/${taskId}`);
+        const data = await res.json();
+
+        statusEl.textContent = `Статус: ${data.status}`;
+
+        if (data.progress !== undefined) {
+            statusEl.textContent += ` (${data.progress}%)`;
+        }
+
+        if (data.status === "SUCCESS") {
+            clearInterval(interval);
+            showStatus(statusEl, "Поиск завершён");
+
+            data.result?.molecules?.forEach(m => {
+                const div = document.createElement("div");
+                div.textContent = `${m.id} | ${m.smiles}`;
+                resultsEl.appendChild(div);
+            });
+        }
+
+        if (data.status === "FAILURE") {
+            clearInterval(interval);
+            showStatus(statusEl, data.error, "error");
+        }
+    }, 1000);
+}
+
+/* INIT */
+loadMolecules();

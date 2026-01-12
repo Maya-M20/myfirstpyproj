@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from celery.result import AsyncResult
 
+
 import sys
 import os
 import logging
@@ -307,68 +308,14 @@ def health_check():
         "services": {"redis": redis_status, "celery": celery_status},
     }
 
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/page", response_class=HTMLResponse)
-def html_page():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>FastAPI with Celery</title>
-        <meta charset="utf-8">
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 100px auto;
-                text-align: center;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 40px;
-                border-radius: 15px;
-            }
-            h1 {
-                font-size: 3em;
-                margin: 0;
-            }
-            .features {
-                background: rgba(255,255,255,0.1);
-                padding: 20px;
-                border-radius: 10px;
-                margin: 20px 0;
-            }
-            a {
-                color: white;
-                text-decoration: none;
-                background: rgba(255,255,255,0.2);
-                padding: 10px 20px;
-                border-radius: 5px;
-                display: inline-block;
-                margin: 10px;
-            }
-            a:hover {
-                background: rgba(255,255,255,0.3);
-            }
-        </style>
-    </head>
-    <body>
-        <h1>FastAPI with Celery</h1>
-        <p>Асинхронная обработка химических данных</p>
-        <div class="features">
-            <strong>Доступные функции:</strong><br>
-            • PostgreSQL база данных<br>
-            • Redis кеширование<br>
-            • Celery асинхронные задачи<br>
-            • Субструктурный поиск молекул
-        </div>
-        <div>
-            <a href="/">JSON API</a>
-            <a href="/docs">Документация</a>
-            <a href="/flower" target="_blank">Celery Monitor</a>
-        </div>
-    </body>
-    </html>
-    """
+def frontend():
+    with open("static/index.html", encoding="utf-8") as f:
+        return f.read()
 
 
 # ============================================================================
