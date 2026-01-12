@@ -1,4 +1,4 @@
-"""Initial schema
+"""Initial schema for molecules table
 
 Revision ID: ef359456e494
 Revises: 
@@ -38,13 +38,22 @@ def upgrade() -> None:
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.Index("idx_molecule_name_formula", "name", "formula"),
-        sa.Index("idx_molecular_weight", "molecular_weight"),
     )
+    
+    # Создаем индексы отдельными командами (лучшая практика)
     op.create_index(op.f("ix_molecules_id"), "molecules", ["id"], unique=False)
     op.create_index(op.f("ix_molecules_name"), "molecules", ["name"], unique=False)
+    op.create_index("idx_molecule_name_formula", "molecules", ["name", "formula"], unique=False)
+    op.create_index("idx_molecular_weight", "molecules", ["molecular_weight"], unique=False)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    # Удаляем индексы
+    op.drop_index("idx_molecular_weight", table_name="molecules")
+    op.drop_index("idx_molecule_name_formula", table_name="molecules")
+    op.drop_index(op.f("ix_molecules_name"), table_name="molecules")
+    op.drop_index(op.f("ix_molecules_id"), table_name="molecules")
+    
+    # Удаляем таблицу
     op.drop_table("molecules")

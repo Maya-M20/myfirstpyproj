@@ -49,11 +49,12 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./src:/app/src:ro          # src/ → /app/src
-      - ./app:/app/app:ro          # app/ → /app/app
+      - ./app:/app/app:ro
+      - ./src:/app/src:ro
+      - ./static:/app/static:ro  # если используете статические файлы
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app/src:/app   # ОБА пути!
+      - PYTHONPATH=/app:/app/src:/app/app  # Все пути
       - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -163,7 +164,7 @@ services:
     depends_on:
       - api
     restart: always
-    
+
 volumes:
   postgres_data:
     driver: local

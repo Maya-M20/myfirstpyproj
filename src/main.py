@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from celery.result import AsyncResult
 
-
 import sys
 import os
 import logging
@@ -16,27 +15,49 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Корректируем пути для импорта из app
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)  # Поднимаемся на уровень выше (в /app)
-sys.path.append(parent_dir)
+# Корректируем пути для импорта
+current_dir = os.path.dirname(os.path.abspath(__file__))  # Текущая директория (src/)
+project_root = os.path.dirname(current_dir)  # Корень проекта (MYFIRSTPYPROJECT/)
+app_dir = os.path.join(project_root, "app")  # Директория app/
 
-# Импортируем из app (теперь app находится на том же уровне что и src)
+# Добавляем пути в sys.path
+sys.path.insert(0, project_root)  # Корень проекта
+sys.path.insert(0, app_dir)       # Директория app/
+
+# Импортируем из app (теперь app импортируется правильно)
 try:
+    # Проверяем существование файлов
+    if not os.path.exists(os.path.join(app_dir, "models.py")):
+        raise ImportError(f"Файл models.py не найден в {app_dir}")
+    
+    # Импортируем модули
     from app import models, schemas
     from app.database import engine, SessionLocal
     from app.dependencies import get_db
     from app.cache import cached, invalidate_molecules_cache
     from app.redis_client import redis_client, get_redis_client
     from app.celery_app import celery_app
-    from app.tasks import substructure_search_task
+    
+    # Пробуем импортировать задачу Celery
+    try:
+        from app.tasks import substructure_search_task
+        logger.info("Импорт substructure_search_task успешен")
+    except ImportError as e:
+        logger.warning(f"Не удалось импортировать substructure_search_task: {e}")
+        # Создаем заглушку для тестирования
+        substructure_search_task = None
 
-    logger.info(" Импорт модулей из app успешен")
+    logger.info("Импорт модулей из app успешен")
+    
 except ImportError as e:
-    logger.error(f" Ошибка импорта: {e}")
-    logger.info("Текущий sys.path:")
+    logger.error(f"Ошибка импорта: {e}")
+    logger.info(f"Текущий sys.path:")
     for p in sys.path:
         logger.info(f"  {p}")
+    logger.info(f"Проверяемые пути:")
+    logger.info(f"  Корень проекта: {project_root}")
+    logger.info(f"  Директория app: {app_dir}")
+    logger.info(f"  Существует ли app/models.py: {os.path.exists(os.path.join(app_dir, 'models.py'))}")
     raise
 
 app = FastAPI(title="Molecules API with Celery", version="1.0.0")
@@ -159,6 +180,12 @@ async def start_async_search(
     """
     Запуск асинхронного субструктурного поиска через Celery
     """
+    if substructure_search_task is None:
+        raise HTTPException(
+            status_code=500, 
+            detail="Задача Celery не доступна. Проверьте файл app/tasks.py"
+        )
+    
     try:
         # Запускаем Celery задачу
         task = substructure_search_task.delay(
@@ -310,12 +337,21 @@ def health_check():
 
 from fastapi.staticfiles import StaticFiles
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Определяем путь к статическим файлам
+static_path = os.path.join(project_root, "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+else:
+    logger.warning(f"Директория static не найдена: {static_path}")
 
 @app.get("/page", response_class=HTMLResponse)
 def frontend():
-    with open("static/index.html", encoding="utf-8") as f:
-        return f.read()
+    html_path = os.path.join(project_root, "static", "index.html")
+    if os.path.exists(html_path):
+        with open(html_path, encoding="utf-8") as f:
+            return f.read()
+    else:
+        return HTMLResponse(content="<h1>Frontend не найден</h1>", status_code=404)
 
 
 # ============================================================================
@@ -497,40 +533,41 @@ def delete_molecule(molecule_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Ошибка при удалении: {str(e)}")
 
 
-# 5. GET /molecules — Список всех молекул (С КЕШИРОВАНИЕМ)
 @app.get("/molecules")
-@cached(ttl=300)  # Кешируем на 5 минут
 def get_all_molecules(
-    skip: int = Query(0, ge=0, description="Количество записей для пропуска"),
-    limit: int = Query(10, ge=1, le=100, description="Количество записей для возврата"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    """
-    Возвращает список всех молекул с пагинацией.
-    """
-    # Получаем общее количество молекул
     total = db.query(models.Molecule).count()
 
-    # Получаем молекулы с пагинацией
-    molecules = db.query(models.Molecule).offset(skip).limit(limit).all()
+    molecules = (
+        db.query(models.Molecule)
+        .order_by(models.Molecule.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
-    # Преобразуем в требуемый формат
-    result = []
-    for molecule in molecules:
-        result.append(
-            {
-                "id": molecule.name,
-                "database_id": molecule.id,
-                "smiles": molecule.smiles,
-                "formula": molecule.formula,
-                "molecular_weight": molecule.molecular_weight,
-                "created_at": molecule.created_at,
-            }
-        )
+    result = [
+        {
+            "id": m.name,
+            "database_id": m.id,
+            "smiles": m.smiles,
+            "formula": m.formula,
+            "molecular_weight": m.molecular_weight,
+            "created_at": m.created_at,
+        }
+        for m in molecules
+    ]
 
-    logger.info(f"Получено {len(molecules)} молекул (skip={skip}, limit={limit})")
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "molecules": result,
+    }
 
-    return {"total": total, "skip": skip, "limit": limit, "molecules": result}
 
 
 # 6. POST /search — Субструктурный поиск (синхронный, С КЕШИРОВАНИЕМ)
@@ -640,8 +677,33 @@ def clear_molecules_cache():
     return {"message": f"Инвалидировано кешей молекул: {deleted}"}
 
 
+#Поиск по SMILES
+@app.get("/molecules/by-smiles/{smiles}")
+def get_molecule_by_smiles(smiles: str, db: Session = Depends(get_db)):
+    molecule = (
+        db.query(models.Molecule)
+        .filter(models.Molecule.smiles == smiles)
+        .first()
+    )
+
+    if not molecule:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Молекула с SMILES '{smiles}' не найдена"
+        )
+
+    return {
+        "id": molecule.name,
+        "database_id": molecule.id,
+        "smiles": molecule.smiles,
+        "formula": molecule.formula,
+        "molecular_weight": molecule.molecular_weight,
+    }
+
+
+
 # Запуск приложения
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

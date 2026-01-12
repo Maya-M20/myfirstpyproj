@@ -17,6 +17,8 @@ COPY requirements.txt .
 # Устанавливаем Python зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV PYTHONPATH=/app:/app/src:/app/app
+
 # Копируем остальные файлы проекта
 COPY . .
 

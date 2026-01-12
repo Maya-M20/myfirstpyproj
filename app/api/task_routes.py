@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from celery.result import AsyncResult
+
+# Используем относительные импорты из текущего пакета
 from ..schemas import TaskResponse, SearchRequest, TaskBase
 from ..tasks import substructure_search_task
 from ..celery_app import celery_app
@@ -15,7 +17,7 @@ async def start_search_task(request: SearchRequest):
     try:
         # Запускаем Celery задачу
         task = substructure_search_task.delay(
-            {"query": request.query, "parameters": request.parameters}
+            {"substructure": request.query, "parameters": request.parameters}  # Исправлено: query -> substructure
         )
 
         return TaskResponse(

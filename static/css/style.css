@@ -1,51 +1,17 @@
 body {
-    font-family: Arial, sans-serif;
-    max-width: 900px;
-    margin: auto;
-    padding: 20px;
-    background: #f7f7f7;
+  font-family: sans-serif;
+  padding: 20px;
 }
 
-h1, h2 {
-    color: #333;
+section {
+  margin-bottom: 30px;
 }
 
-form {
-    margin-bottom: 10px;
+table {
+  border-collapse: collapse;
 }
 
-input {
-    padding: 6px;
-    margin-right: 5px;
-    width: 250px;
-}
-
-button {
-    padding: 6px 12px;
-    cursor: pointer;
-}
-
-.status {
-    margin-top: 8px;
-    font-size: 0.9em;
-}
-
-.status.success {
-    color: green;
-}
-
-.status.error {
-    color: red;
-}
-
-#molecules-list div,
-#search-results div {
-    padding: 6px;
-    background: white;
-    margin-bottom: 4px;
-    border-radius: 4px;
-}
-
-.pagination {
-    margin-top: 10px;
+td, th {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
 }
