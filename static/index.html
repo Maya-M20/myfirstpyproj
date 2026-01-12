@@ -1,29 +1,45 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Molecules App</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
 
 <h1>🧪 Molecules Database</h1>
 
+<!-- ================= Добавление молекулы ================= -->
 <section>
     <h2>➕ Добавить молекулу</h2>
+
     <form id="add-molecule-form">
-        <input type="text" id="mol-id" placeholder="ID молекулы" required>
-        <input type="text" id="mol-smiles" placeholder="SMILES" required>
+        <input
+            type="text"
+            id="mol-id"
+            placeholder="ID молекулы"
+            required
+        />
+        <input
+            type="text"
+            id="mol-smiles"
+            placeholder="SMILES"
+            required
+        />
         <button type="submit">Добавить</button>
     </form>
+
     <div id="add-status" class="status"></div>
 </section>
 
-<hr>
+<hr />
 
+<!-- ================= Список молекул ================= -->
 <section>
     <h2>📋 Список молекул</h2>
+
     <div id="molecules-list"></div>
+
     <div class="pagination">
         <button id="prev-page">←</button>
         <span id="page-info"></span>
@@ -31,16 +47,30 @@
     </div>
 </section>
 
-<hr>
+<hr />
 
+<!-- ================= Субструктурный поиск ================= -->
 <section>
     <h2>🔍 Субструктурный поиск</h2>
+
     <form id="search-form">
-        <input type="text" id="substructure" placeholder="SMILES субструктуры" required>
+        <input
+            type="text"
+            id="search-input"
+            placeholder="SMILES субструктуры (например CCO)"
+            required
+        />
         <button type="submit">Искать</button>
     </form>
+
+    <!-- статус Celery задачи -->
     <div id="search-status" class="status"></div>
-    <div id="search-results"></div>
+
+    <!-- результаты поиска -->
+    <div id="search-results">
+        <h3>Результаты поиска</h3>
+        <ul id="results-list"></ul>
+    </div>
 </section>
 
 <script src="/static/js/app.js"></script>
