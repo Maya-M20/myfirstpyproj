@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any
 from enum import Enum
 
 
-# Базовый класс для молекулы - что общего у всех молекулярных схем
+#базовый класс для молекулы
 class MoleculeBase(BaseModel):
     name: str
     formula: str
@@ -13,20 +13,19 @@ class MoleculeBase(BaseModel):
     smiles: str
 
 
-# Схема для СОЗДАНИЯ молекулы (принимаем от пользователя)
+#схема для создания молекулы - от пользователя
 class MoleculeCreate(MoleculeBase):
-    pass  # пока наследуем все поля без изменений
+    pass 
 
 
-# Схема для ОТПРАВКИ молекулы (возвращаем пользователю)
+#схема для отправки молекулы - к пользователю
 class Molecule(MoleculeBase):
-    id: int  # добавляем ID
-    created_at: datetime  # добавляем дату создания
-    updated_at: Optional[datetime] = None  # может быть пустым если не обновлялась
+    id: int  
+    created_at: datetime  
+    updated_at: Optional[datetime] = None 
 
-    # Важная настройка для Pydantic v2:
     class Config:
-        from_attributes = True  # позволяет создавать схему из SQLAlchemy модели
+        from_attributes = True 
 
 
 class TaskStatus(str, Enum):

@@ -23,19 +23,19 @@ class RedisClient:
         try:
             self._client = redis.Redis.from_url(
                 self.redis_url,
-                decode_responses=False,  # получаем bytes, сами декодируем
-                socket_connect_timeout=5,  # таймаут подключения 5 сек
-                socket_timeout=5,  # таймаут операций 5 сек
-                retry_on_timeout=True,  # повторять при таймауте
-                max_connections=10,  # максимальное количество подключений
+                decode_responses=False,
+                socket_connect_timeout=5,
+                socket_timeout=5,
+                retry_on_timeout=True,
+                max_connections=10,
             )
-            # Проверяем подключение
+            #проверка подключения
             self._client.ping()
             self.is_available = True
             logger.info("Подключение к Redis установлено")
         except Exception as e:
             self.is_available = False
-            logger.warning(f"Redis недоступен: {e}. Работа без кеша.")
+            logger.warning(f"Redis недоступен: {e}. Работа без кэша.")
             self._client = None
 
     @property
@@ -51,7 +51,7 @@ class RedisClient:
             return False
 
         try:
-            # Сериализуем объект
+            #сериализация объекта
             serialized = pickle.dumps(value)
             result = self.client.setex(key, ttl, serialized)
             return bool(result)
@@ -103,18 +103,18 @@ class RedisClient:
             return 0
 
     def clear_cache(self):
-        """Очистить весь кеш (только для разработки!)"""
+        """Очистить весь кэш"""
         if not self.is_available:
             return
 
         try:
             self.client.flushdb()
-            logger.info("🧹 Весь кеш Redis очищен")
+            logger.info(" Весь кэш Redis очищен")
         except Exception as e:
-            logger.error(f"Ошибка очистки кеша: {e}")
+            logger.error(f"Ошибка очистки кэша: {e}")
 
 
-# Создаем глобальный экземпляр
+#глобальный экземпляр
 redis_client = RedisClient()
 
 
@@ -125,7 +125,7 @@ def get_redis_client() -> RedisClient:
     """
     global redis_client
 
-    # Если клиент не подключен, подключаем
+    #подключение вручную, если чет не то
     if not redis_client.is_available:
         redis_client.connect()
 

@@ -2,7 +2,7 @@ from celery import Celery
 from .redis_client import get_redis_client
 import os
 
-# Получаем клиент Redis
+#получаение клиент Redis
 redis_client = get_redis_client()
 
 celery_app = Celery(
@@ -12,7 +12,7 @@ celery_app = Celery(
     include=["app.tasks"],
 )
 
-# Конфигурация
+#конфигурация
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -26,7 +26,7 @@ celery_app.conf.update(
 )
 
 
-# Используем ваш Redis клиент для результатов
+#для рез-тов использую мой Redis клиент
 class CustomRedisBackend:
     def __init__(self):
         self.redis = redis_client

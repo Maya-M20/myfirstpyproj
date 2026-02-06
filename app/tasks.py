@@ -14,7 +14,7 @@ def substructure_search_task(self, search_data: dict):
     db = SessionLocal()
 
     try:
-        # 1️⃣ Старт
+        #стартуем
         self.update_state(
             state="PROGRESS",
             meta={
@@ -25,7 +25,7 @@ def substructure_search_task(self, search_data: dict):
 
         time.sleep(0.5)
 
-        # 2️⃣ Поиск в БД
+        #ищем в бд
         self.update_state(
             state="PROGRESS",
             meta={
@@ -42,7 +42,7 @@ def substructure_search_task(self, search_data: dict):
 
         time.sleep(0.5)
 
-        # 3️⃣ Формирование результата
+        #формировка рез-та
         results = [
             {
                 "id": m.name,
@@ -51,7 +51,7 @@ def substructure_search_task(self, search_data: dict):
             for m in molecules
         ]
 
-        # 4️⃣ Завершение
+        #конец
         self.update_state(
             state="PROGRESS",
             meta={

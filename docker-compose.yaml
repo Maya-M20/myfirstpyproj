@@ -1,9 +1,7 @@
 version: '3.8'
 
 services:
-  # ========================
-  # POSTGRESQL
-  # ========================
+  # postgresql
   postgres:
     image: postgres:15-alpine
     container_name: postgres_db
@@ -22,9 +20,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ========================
-  # REDIS
-  # ========================
+  #redis
   redis:
     image: redis:7-alpine
     container_name: redis_cache
@@ -40,9 +36,7 @@ services:
       timeout: 3s
       retries: 3
 
-  # ========================
-  # FASTAPI (порт 8080)
-  # ========================
+  # fastapi
   api:
     build: .
     container_name: fastapi_app
@@ -51,10 +45,10 @@ services:
     volumes:
       - ./app:/app/app:ro
       - ./src:/app/src:ro
-      - ./static:/app/static:ro  # если используете статические файлы
+      - ./static:/app/static:ro 
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app:/app/src:/app/app  # Все пути
+      - PYTHONPATH=/app:/app/src:/app/app 
       - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -77,17 +71,15 @@ services:
       retries: 3
       start_period: 40s
 
-  # ========================
-  # CELERY WORKER
-  # ========================
+  #celery worker
   celery_worker:
     build: .
     container_name: celery_worker
     volumes:
-      - ./src:/app/src:ro          # src/ → /app/src
-      - ./app:/app/app:ro          # app/ → /app/app
+      - ./src:/app/src:ro     
+      - ./app:/app/app:ro          
     environment:
-      - PYTHONPATH=/app:/app/app:/app/src  # ВСЕ пути!
+      - PYTHONPATH=/app:/app/app:/app/src 
       - DATABASE_URL=postgresql+psycopg2://postgres:mysecretpassword@postgres:5432/molecules_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -100,9 +92,7 @@ services:
     restart: unless-stopped
     command: celery -A app.celery_app worker --loglevel=info --concurrency=4
 
-  # ========================
-  # CELERY BEAT
-  # ========================
+  #celery beat
   celery_beat:
     build: .
     container_name: celery_beat
@@ -124,9 +114,7 @@ services:
     restart: unless-stopped
     command: celery -A app.celery_app beat --loglevel=info
 
-  # ========================
-  # FLOWER
-  # ========================
+  # flower
   flower:
     build: .
     container_name: flower_monitor
@@ -150,9 +138,7 @@ services:
     restart: unless-stopped
     command: celery -A app.celery_app flower --port=5555 --basic_auth=admin:admin123
 
-  # ========================
-  # NGINX
-  # ========================
+  #nginx
   nginx:
     image: nginx:alpine
     container_name: nginx_proxy

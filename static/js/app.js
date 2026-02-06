@@ -22,7 +22,7 @@ async function addMolecule() {
   }
 
   try {
-    setStatus("Добавление молекулы...");
+    setStatus("Добавление молекулы");
     const res = await fetch("/molecules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -32,7 +32,7 @@ async function addMolecule() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Ошибка добавления");
 
-    setStatus("Молекула добавлена ✅");
+    setStatus("Молекула добавлена");
     skip = 0;
     loadMolecules();
   } catch (e) {
@@ -124,7 +124,6 @@ function prevPage() {
   }
 }
 
-/* ---------------- SEARCH ---------------- */
 
 async function search() {
   const query = document.getElementById("search-query").value.trim();
@@ -152,12 +151,11 @@ async function search() {
       </li>
     `;
 
-    setStatus("Молекула найдена ✅");
+    setStatus("Молекула найдена");
   } catch (e) {
     setStatus(e.message, true);
   }
 }
 
-/* ---------------- INIT ---------------- */
 
 loadMolecules();

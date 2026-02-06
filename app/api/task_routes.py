@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from celery.result import AsyncResult
 
-# Используем относительные импорты из текущего пакета
 from ..schemas import TaskResponse, SearchRequest, TaskBase
 from ..tasks import substructure_search_task
 from ..celery_app import celery_app
@@ -15,9 +14,9 @@ async def start_search_task(request: SearchRequest):
     Запуск асинхронного субструктурного поиска
     """
     try:
-        # Запускаем Celery задачу
+        #запуск Celery задачи
         task = substructure_search_task.delay(
-            {"substructure": request.query, "parameters": request.parameters}  # Исправлено: query -> substructure
+            {"substructure": request.query, "parameters": request.parameters}
         )
 
         return TaskResponse(
@@ -73,7 +72,7 @@ async def celery_health():
     Проверка здоровья Celery
     """
     try:
-        # Простая проверка подключения к брокеру
+        #проверка подключения к брокеру
         insp = celery_app.control.inspect()
         stats = insp.stats()
 
