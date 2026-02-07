@@ -2,47 +2,19 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Molecules Dashboard</title>
+  <title>Поиск молекулы</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<h1> Molecules Dashboard</h1>
+<h1>Поиск молекулы</h1>
 
 <section>
-  <h2>Добавить молекулу</h2>
-  <input id="mol-id" placeholder="ID" />
-  <input id="mol-smiles" placeholder="SMILES" />
-  <button onclick="addMolecule()">Добавить</button>
-</section>
-
-<section>
-  <h2>Список молекул</h2>
-
-  <table id="molecules-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>SMILES</th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
-
-  <div style="margin-top: 10px;">
-    <button id="prev" onclick="prevPage()">⬅</button>
-    <span id="page-info"></span>
-    <button id="next" onclick="nextPage()">➡</button>
-  </div>
-</section>
-
-<section>
-  <h2>Субструктурный поиск</h2>
-  <input id="search-query" placeholder="SMILES субструктуры" />
+  <input id="search-query" placeholder="Введите SMILES" />
   <button onclick="search()">Искать</button>
-  <ul id="search-results"></ul>
 </section>
+
+<ul id="search-results"></ul>
 
 <div id="status" style="margin-top: 15px;"></div>
 

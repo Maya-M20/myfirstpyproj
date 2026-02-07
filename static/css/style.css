@@ -3,15 +3,14 @@ body {
   padding: 20px;
 }
 
-section {
-  margin-bottom: 30px;
+input {
+  padding: 5px;
 }
 
-table {
-  border-collapse: collapse;
-}
-
-td, th {
-  border: 1px solid #ccc;
+button {
   padding: 5px 10px;
+}
+
+#status {
+  margin-top: 10px;
 }

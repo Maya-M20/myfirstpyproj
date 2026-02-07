@@ -15,22 +15,19 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Корректируем пути для импорта
-current_dir = os.path.dirname(os.path.abspath(__file__))  # Текущая директория (src/)
-project_root = os.path.dirname(current_dir)  # Корень проекта (MYFIRSTPYPROJECT/)
-app_dir = os.path.join(project_root, "app")  # Директория app/
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)  
+app_dir = os.path.join(project_root, "app") 
 
-# Добавляем пути в sys.path
-sys.path.insert(0, project_root)  # Корень проекта
-sys.path.insert(0, app_dir)       # Директория app/
+#пути в sys.path
+sys.path.insert(0, project_root) 
+sys.path.insert(0, app_dir)
 
-# Импортируем из app (теперь app импортируется правильно)
 try:
-    # Проверяем существование файлов
+    #проверка существование файлов
     if not os.path.exists(os.path.join(app_dir, "models.py")):
         raise ImportError(f"Файл models.py не найден в {app_dir}")
     
-    # Импортируем модули
     from app import models, schemas
     from app.database import engine, SessionLocal
     from app.dependencies import get_db
@@ -38,13 +35,13 @@ try:
     from app.redis_client import redis_client, get_redis_client
     from app.celery_app import celery_app
     
-    # Пробуем импортировать задачу Celery
+    #импорт задачи Celery
     try:
         from app.tasks import substructure_search_task
         logger.info("Импорт substructure_search_task успешен")
     except ImportError as e:
         logger.warning(f"Не удалось импортировать substructure_search_task: {e}")
-        # Создаем заглушку для тестирования
+        #заглушка для тестирования
         substructure_search_task = None
 
     logger.info("Импорт модулей из app успешен")
@@ -62,14 +59,12 @@ except ImportError as e:
 
 app = FastAPI(title="Molecules API with Celery", version="1.0.0")
 
-# ============================================================================
-# СОЗДАНИЕ ТАБЛИЦ В БАЗЕ ДАННЫХ
-# ============================================================================
+#создание таблиц в бд
 
 print("Проверяем подключение к PostgreSQL и создаем таблицы...")
 
 try:
-    # Создаем таблицы если их нет
+    #создание таблиц, если их нет
     models.Base.metadata.create_all(bind=engine)
     print(" Таблицы успешно созданы в PostgreSQL!")
 
@@ -78,17 +73,14 @@ except Exception as e:
     print("Продолжаем без базы данных...")
 
 
-# Инициализируем Redis при старте
+#инициализация redis при старте
 @app.on_event("startup")
 async def startup_event():
     redis_client.connect()
     logger.info("Приложение запущено, Redis подключен")
 
 
-# ============================================================================
-# PYDANTIC СХЕМЫ
-# ============================================================================
-
+#pydantic схемы
 
 class MoleculeSimple(BaseModel):
     """Простая схема для добавления молекулы (только ID и SMILES)"""
@@ -131,9 +123,7 @@ class TaskStatusResponse(BaseModel):
     date_done: Optional[datetime] = None
 
 
-# ============================================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-# ============================================================================
+#вспомогательные функции
 
 
 def substructure_search(
@@ -168,9 +158,8 @@ def substructure_search(
     return results
 
 
-# ============================================================================
-# CELERY ЭНДПОИНТЫ
-# ============================================================================
+
+#celery эндпоинты
 
 
 @app.post("/async/search", response_model=CeleryTaskResponse)
@@ -290,10 +279,7 @@ async def celery_health():
         return {"status": "unhealthy", "error": str(e)}
 
 
-# ============================================================================
-# КОРНЕВЫЕ ЭНДПОИНТЫ
-# ============================================================================
-
+#корневые эндпоинты
 
 @app.get("/")
 def home():
@@ -337,7 +323,7 @@ def health_check():
 
 from fastapi.staticfiles import StaticFiles
 
-# Определяем путь к статическим файлам
+#определение пути к статическим файлам
 static_path = os.path.join(project_root, "static")
 if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
@@ -354,12 +340,8 @@ def frontend():
         return HTMLResponse(content="<h1>Frontend не найден</h1>", status_code=404)
 
 
-# ============================================================================
-# ОСНОВНЫЕ ЭНДПОИНТЫ API С КЕШИРОВАНИЕМ
-# ============================================================================
+#основные эндпоинты апи с кэшированием
 
-
-# 1. POST /molecules — Добавление новой молекулы
 @app.post("/molecules")
 def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
     """
@@ -383,7 +365,7 @@ def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
             formula="N/A",
             molecular_weight=0.0,
             smiles=molecule.smiles,
-            inchi=""  # ← Используем переданное значение или None
+            inchi=""  
         )
 
         db.add(db_molecule)
@@ -391,10 +373,10 @@ def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
         db.refresh(db_molecule)
 
         logger.info(
-            f"✅ Молекула добавлена: ID='{molecule.id}', SMILES='{molecule.smiles}'"
+            f"Молекула добавлена: ID='{molecule.id}', SMILES='{molecule.smiles}'"
         )
 
-        # Инвалидация кеша
+        #инвалидация кэша
         invalidate_molecules_cache()
         logger.info(f"Кеш инвалидирован после добавления молекулы {molecule.id}")
 
@@ -412,9 +394,8 @@ def add_molecule(molecule: MoleculeSimple, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Ошибка при добавлении: {str(e)}")
 
 
-# 2. GET /molecules/{id} — Получение молекулы по ID (С КЕШИРОВАНИЕМ)
 @app.get("/molecules/{molecule_id}")
-@cached(ttl=600)  #  Кешируем на 10 минут
+@cached(ttl=600)
 def get_molecule(molecule_id: str, db: Session = Depends(get_db)):
     """
     Получает молекулу по её идентификатору.
@@ -439,11 +420,10 @@ def get_molecule(molecule_id: str, db: Session = Depends(get_db)):
         "updated_at": molecule.updated_at,
     }
 
-    logger.info(f"✅ Получена молекула {molecule_id}")
+    logger.info(f"Получена молекула {molecule_id}")
     return result
 
 
-# 3. PUT /molecules/{id} — Обновление молекулы
 @app.put("/molecules/{molecule_id}")
 def update_molecule(
     molecule_id: str, update_data: MoleculeUpdateSimple, db: Session = Depends(get_db)
@@ -471,14 +451,13 @@ def update_molecule(
             f"Молекула обновлена: ID='{molecule_id}', SMILES: {old_smiles} -> {update_data.smiles}"
         )
 
-        #  ИНВАЛИДАЦИЯ КЕША ПОСЛЕ ОБНОВЛЕНИЯ
-        # 1. Инвалидируем кеш этой конкретной молекулы
+        #инвалидация кэша с одной молекулой
         get_molecule.invalidate_cache(molecule_id)
 
-        # 2. Инвалидируем общий кеш
+        #инвалидация общего кэша
         invalidate_molecules_cache()
 
-        logger.info(f"Кеш инвалидирован после обновления молекулы {molecule_id}")
+        logger.info(f"Кэш инвалидирован после обновления молекулы {molecule_id}")
 
         return {
             "message": f"Молекула '{molecule_id}' успешно обновлена",
@@ -492,7 +471,6 @@ def update_molecule(
         raise HTTPException(status_code=500, detail=f"Ошибка при обновлении: {str(e)}")
 
 
-# 4. DELETE /molecules/{id} — Удаление молекулы
 @app.delete("/molecules/{molecule_id}")
 def delete_molecule(molecule_id: str, db: Session = Depends(get_db)):
     """
@@ -514,14 +492,11 @@ def delete_molecule(molecule_id: str, db: Session = Depends(get_db)):
 
         logger.info(f"Молекула удалена: ID='{molecule_id}' (database_id={db_id})")
 
-        #  ИНВАЛИДАЦИЯ КЕША ПОСЛЕ УДАЛЕНИЯ
-        # 1. Инвалидируем кеш удаленной молекулы
         get_molecule.invalidate_cache(molecule_id)
 
-        # 2. Инвалидируем общий кеш
         invalidate_molecules_cache()
 
-        logger.info(f"Кеш инвалидирован после удаления молекулы {molecule_id}")
+        logger.info(f"Кэш инвалидирован после удаления молекулы {molecule_id}")
 
         return {
             "message": f"Молекула '{molecule_id}' успешно удалена",
@@ -569,16 +544,14 @@ def get_all_molecules(
     }
 
 
-
-# 6. POST /search — Субструктурный поиск (синхронный, С КЕШИРОВАНИЕМ)
 @app.post("/search")
-@cached(ttl=600)  # Кешируем на 10 минут (поиск может быть тяжелым)
+@cached(ttl=600)
 def search_molecules(search_request: SearchRequest, db: Session = Depends(get_db)):
     """
     Выполняет синхронный субструктурный поиск по всем молекулам.
     Для больших наборов данных используйте /async/search
     """
-    # Получаем ВСЕ молекулы из БД
+    #все молекулы из бд
     all_molecules = db.query(models.Molecule).all()
 
     if not all_molecules:
@@ -588,16 +561,16 @@ def search_molecules(search_request: SearchRequest, db: Session = Depends(get_db
             "molecules": [],
         }
 
-    # Извлекаем SMILES
+    #извлечение smiles
     all_smiles = [mol.smiles for mol in all_molecules]
 
-    # Выполняем поиск субструктур
+    #поиск субструктур
     try:
         found_smiles = substructure_search(all_smiles, search_request.substructure)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Находим полную информацию о найденных молекулах
+    #полная инфа о найденных молекулах
     results = []
     for smiles in found_smiles:
         molecule = (
@@ -625,14 +598,12 @@ def search_molecules(search_request: SearchRequest, db: Session = Depends(get_db
     }
 
 
-# ============================================================================
-# ЭНДПОИНТЫ ДЛЯ УПРАВЛЕНИЯ КЕШЕМ
-# ============================================================================
+#эндпоинты для управления кэшем
 
 
 @app.get("/cache/stats")
 def get_cache_stats():
-    """Получить статистику кеша Redis"""
+    """Получить статистику кэша Redis"""
     if not redis_client.is_available:
         return {"redis": "unavailable"}
 
@@ -658,26 +629,26 @@ def get_cache_stats():
 
 @app.delete("/cache/clear")
 def clear_cache():
-    """Очистить весь кеш Redis (только для разработки!)"""
+    """Очистить весь кэш Redis"""
     if not redis_client.is_available:
         return {"message": "Redis недоступен"}
 
     try:
         redis_client.client.flushdb()
-        logger.warning("Весь кеш Redis очищен")
-        return {"message": "Кеш очищен"}
+        logger.warning("Весь кэш Redis очищен")
+        return {"message": "Кэш очищен"}
     except Exception as e:
-        return {"message": f"Ошибка при очистке кеша: {str(e)}"}
+        return {"message": f"Ошибка при очистке кэша: {str(e)}"}
 
 
 @app.delete("/cache/molecules")
 def clear_molecules_cache():
-    """Очистить кеш молекул"""
+    """Очистить кэш молекул"""
     deleted = invalidate_molecules_cache()
-    return {"message": f"Инвалидировано кешей молекул: {deleted}"}
+    return {"message": f"Инвалидировано кэшей молекул: {deleted}"}
 
 
-#Поиск по SMILES
+#поиск по SMILES
 @app.get("/molecules/by-smiles/{smiles}")
 def get_molecule_by_smiles(smiles: str, db: Session = Depends(get_db)):
     molecule = (
@@ -702,7 +673,7 @@ def get_molecule_by_smiles(smiles: str, db: Session = Depends(get_db)):
 
 
 
-# Запуск приложения
+#запуск приложения
 if __name__ == "__main__":
     import uvicorn
 
