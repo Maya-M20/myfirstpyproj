@@ -1,16 +1,59 @@
 body {
+  background-color: lightblue;
   font-family: sans-serif;
-  padding: 20px;
+  padding: 30px;
+}
+
+.form {
+  margin-bottom: 20px;
 }
 
 input {
-  padding: 5px;
+  display: block;
+  margin: 10px 0;
+  padding: 30px;
+  width: 300px;
 }
 
 button {
-  padding: 5px 10px;
+  padding: 10px 15px;
 }
 
 #status {
   margin-top: 10px;
+}
+
+/* ---------- ТАБЛИЦА ---------- */
+
+table {
+  border-collapse: collapse;
+  margin-top: 15px;
+  background-color: white;
+  min-width: 400px;
+}
+
+th {
+  background-color: #4da6ff;
+  color: white;
+  padding: 8px;
+}
+
+td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+/* ---------- ПАГИНАЦИЯ ---------- */
+
+.pagination {
+  margin-top: 10px;
+}
+
+.pagination button {
+  margin: 0 5px;
+}
+
+#page-info {
+  margin: 0 10px;
+  font-weight: bold;
 }
