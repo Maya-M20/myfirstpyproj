@@ -7,6 +7,7 @@
 </head>
 <body>
 
+<div class="block"></div>
   <h2>Добавить молекулу</h2>
 
   <div class="form">
@@ -15,39 +16,45 @@
     <button onclick="addMolecule()">Добавить</button>
     <div id="status-add"></div>
   </div>
-  
+</div>  
 
-<table id="molecules-table">
-  <thead>
-    <tr>
-      <th>Название</th>
-      <th>SMILES</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div class="block"></div>
+  <table id="molecules-table">
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>SMILES</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<div class="pagination">
-  <button id="prev" onclick="prevPage()">Назад</button>
-  <span id="page-info"></span>
-  <button id="next" onclick="nextPage()">Вперёд</button>
+  <div class="pagination">
+    <button id="prev" onclick="prevPage()">Назад</button>
+    <span id="page-info"></span>
+    <button id="next" onclick="nextPage()">Вперёд</button>
+  </div>
 </div>
 
-<h2>Поиск молекулы</h2>
+<div class="block"></div>
+  <h2>Поиск молекулы</h2>
 
-<section>
-  <input id="search-query" placeholder="Введите SMILES" />
-  <button onclick="search()">Искать</button>
-  <ul id="search-results"></ul>
-  <div id="status-search"></div>
-</section>
+  <section>
+    <input id="search-query" placeholder="Введите SMILES" />
+    <button onclick="search()">Искать</button>
+    <ul id="search-results"></ul>
+    <div id="status-search"></div>
+  </section>
+</div>
 
-<h2>Удалить молекулу</h2>
+<div class="block"></div>
+  <h2>Удалить молекулу</h2>
 
-<div class="form">
-  <input id="delete-input" placeholder="Введите название или SMILES">
-  <button onclick="deleteMoleculeByInput()">Удалить</button>
-  <div id="status-delete"></div>
+  <div class="form">
+    <input id="delete-input" placeholder="Введите название или SMILES">
+    <button onclick="deleteMoleculeByInput()">Удалить</button>
+    <div id="status-delete"></div>
+  </div>
 </div>
 
 <script src="/static/js/app.js"></script>

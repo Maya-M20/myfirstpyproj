@@ -5,13 +5,17 @@ body {
 }
 
 .form {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.block {
+  margin-bottom: 60px;
 }
 
 input {
   display: block;
   margin: 10px 0;
-  padding: 30px;
+  padding: 20px;
   width: 300px;
 }
 
@@ -33,7 +37,7 @@ table {
 }
 
 th {
-  background-color: #4da6ff;
+  background-color: #536e99;
   color: white;
   padding: 8px;
 }
