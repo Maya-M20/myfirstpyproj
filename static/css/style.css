@@ -1,6 +1,7 @@
 body {
   background-color: lightblue;
   font-family: sans-serif;
+  font-size: 16px;
   padding: 30px;
 }
 
@@ -15,6 +16,7 @@ body {
 input {
   display: block;
   margin: 10px 0;
+  font-size: 16px;
   padding: 20px;
   width: 300px;
 }
@@ -27,7 +29,6 @@ button {
   margin-top: 10px;
 }
 
-/* ---------- ТАБЛИЦА ---------- */
 
 table {
   border-collapse: collapse;
@@ -44,10 +45,16 @@ th {
 
 td {
   border: 1px solid #ccc;
-  padding: 8px;
+  padding: 16px;        /* было 8px → увеличиваем */
+  min-width: 250px;     /* минимальная ширина колонки */
+  vertical-align: top;  /* чтобы контент сверху выравнивался */
 }
 
-/* ---------- ПАГИНАЦИЯ ---------- */
+.mol-viewer {
+  width: 250px;   /* ширина блока для SVG */
+  height: 200px;  /* высота блока для SVG */
+}
+
 
 .pagination {
   margin-top: 10px;

@@ -3,27 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <title>Поиск молекулы</title>
+
+  <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+  <script>
+  window.RDKitAsyncInit = window.initRDKitModule({
+    locateFile: function() {
+      return "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm";
+    }
+  });
+  </script>
+
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<div class="block"></div>
+<div class="block">
   <h2>Добавить молекулу</h2>
-
   <div class="form">
     <input id="mol-name" type="text" placeholder="Название молекулы">
     <input id="mol-smiles" type="text" placeholder="SMILES">
     <button onclick="addMolecule()">Добавить</button>
     <div id="status-add"></div>
   </div>
-</div>  
+</div>
 
-<div class="block"></div>
+<div class="block">
   <table id="molecules-table">
     <thead>
       <tr>
         <th>Название</th>
         <th>SMILES</th>
+        <th>Структура</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -36,20 +46,16 @@
   </div>
 </div>
 
-<div class="block"></div>
+<div class="block">
   <h2>Поиск молекулы</h2>
-
-  <section>
-    <input id="search-query" placeholder="Введите SMILES" />
-    <button onclick="search()">Искать</button>
-    <ul id="search-results"></ul>
-    <div id="status-search"></div>
-  </section>
+  <input id="search-query" placeholder="Введите SMILES" />
+  <button onclick="search()">Искать</button>
+  <ul id="search-results"></ul>
+  <div id="status-search"></div>
 </div>
 
-<div class="block"></div>
+<div class="block">
   <h2>Удалить молекулу</h2>
-
   <div class="form">
     <input id="delete-input" placeholder="Введите название или SMILES">
     <button onclick="deleteMoleculeByInput()">Удалить</button>
@@ -59,4 +65,5 @@
 
 <script src="/static/js/app.js"></script>
 </body>
+
 </html>
