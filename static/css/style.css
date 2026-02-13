@@ -45,14 +45,14 @@ th {
 
 td {
   border: 1px solid #ccc;
-  padding: 16px;        /* было 8px → увеличиваем */
-  min-width: 250px;     /* минимальная ширина колонки */
-  vertical-align: top;  /* чтобы контент сверху выравнивался */
+  padding: 16px;      
+  min-width: 250px;     
+  vertical-align: top;
 }
 
 .mol-viewer {
-  width: 250px;   /* ширина блока для SVG */
-  height: 200px;  /* высота блока для SVG */
+  width: 250px; 
+  height: 200px;
 }
 
 
