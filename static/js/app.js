@@ -1,5 +1,5 @@
 var skip = 0;
-var limit = 3;
+var limit = 2;
 var total = 0;
 
 function setStatus(id, text, isError) {
