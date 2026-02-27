@@ -158,7 +158,7 @@ function search() {
     })
     .then(data => {
       var li = document.createElement("li");
-      li.textContent = "ID: " + data.id + " | SMILES: " + data.smiles;
+      li.textContent = "Молекула: " + data.id;
       results.appendChild(li);
       setStatus("status-search", "Молекула найдена");
       document.getElementById("search-query").value = "";
