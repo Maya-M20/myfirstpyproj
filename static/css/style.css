@@ -33,13 +33,13 @@ button {
 table {
   border-collapse: collapse;
   margin-top: 15px;
-  background-color: #ccc;
+  background-color: #ffffff;
   min-width: 400px;
 }
 
 th {
   background-color: #536e99;
-  color: white;
+  color: #ffffff;
   padding: 8px;
 }
 
